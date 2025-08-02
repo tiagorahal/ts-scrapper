@@ -1,208 +1,238 @@
 #!/usr/bin/env python3
 """
-Script para fazer debug detalhado dos erros
+Script de diagnóstico para verificar o estado atual dos sites do TJSP
 """
 
-import subprocess
+import asyncio
 import sys
-from pathlib import Path
-import ast
+from datetime import datetime
+from playwright.async_api import async_playwright
 
-def verificar_sintaxe_arquivo(arquivo):
-    """Verifica a sintaxe de um arquivo Python"""
-    print(f"\n🔍 Verificando {arquivo}...")
-    
-    if not Path(arquivo).exists():
-        print(f"   ❌ Arquivo não encontrado!")
-        return False
-    
-    try:
-        with open(arquivo, 'r', encoding='utf-8') as f:
-            conteudo = f.read()
-            
-        # Verifica se há BOM no início
-        if conteudo.startswith('\ufeff'):
-            print(f"   ⚠️  Arquivo contém BOM (Byte Order Mark)")
-            conteudo = conteudo[1:]
-            
-        # Tenta fazer parse do arquivo
-        ast.parse(conteudo)
-        print(f"   ✅ Sintaxe OK")
-        
-        # Verifica primeiras linhas
-        primeiras_linhas = conteudo.split('\n')[:5]
-        print(f"   📄 Primeiras linhas:")
-        for i, linha in enumerate(primeiras_linhas, 1):
-            print(f"      {i}: {repr(linha)}")
-            
-        return True
-        
-    except SyntaxError as e:
-        print(f"   ❌ Erro de sintaxe na linha {e.lineno}:")
-        print(f"      {e.msg}")
-        print(f"      Linha: {repr(e.text) if e.text else 'N/A'}")
-        return False
-    except Exception as e:
-        print(f"   ❌ Erro ao verificar: {e}")
-        return False
+# URLs dos sites do TJSP
+URLS = {
+    "primeira_instancia": "https://esaj.tjsp.jus.br/cpopg/open.do",
+    "segunda_instancia": "https://esaj.tjsp.jus.br/cposg/open.do", 
+    "colegio_recursal": "https://esaj.tjsp.jus.br/cposgcr/open.do"
+}
 
-def executar_teste_direto(arquivo):
-    """Tenta executar o arquivo diretamente para capturar erro completo"""
-    print(f"\n🧪 Testando execução direta de {arquivo}...")
+async def diagnosticar_site(nome, url):
+    """Diagnostica um site específico do TJSP"""
+    print(f"\n{'='*50}")
+    print(f"🔍 Diagnosticando: {nome}")
+    print(f"📍 URL: {url}")
+    print(f"{'='*50}")
     
-    # Cria um CNPJ de teste
-    cnpj_teste = "00000000000191"
-    
-    try:
-        # Executa com um import teste primeiro
-        result = subprocess.run(
-            [sys.executable, "-c", f"import sys; sys.path.insert(0, '.'); import {arquivo[:-3]}"],
-            capture_output=True,
-            text=True,
-            encoding='utf-8'
-        )
-        
-        if result.returncode != 0:
-            print(f"   ❌ Erro ao importar módulo:")
-            print(f"      STDOUT: {result.stdout}")
-            print(f"      STDERR: {result.stderr}")
-            return False
-        else:
-            print(f"   ✅ Import OK")
-            
-        # Tenta executar com argumento
-        result = subprocess.run(
-            [sys.executable, arquivo, cnpj_teste],
-            capture_output=True,
-            text=True,
-            encoding='utf-8',
-            timeout=5  # timeout de 5 segundos
-        )
-        
-        print(f"   Return code: {result.returncode}")
-        if result.stdout:
-            print(f"   STDOUT: {result.stdout[:200]}...")
-        if result.stderr:
-            print(f"   STDERR: {result.stderr[:500]}...")
-            
-    except subprocess.TimeoutExpired:
-        print(f"   ⏱️  Timeout - script demorou mais de 5 segundos")
-    except Exception as e:
-        print(f"   ❌ Erro na execução: {e}")
-
-def verificar_encoding(arquivo):
-    """Verifica o encoding do arquivo"""
-    print(f"\n🔤 Verificando encoding de {arquivo}...")
-    
-    encodings = ['utf-8', 'utf-8-sig', 'latin-1', 'cp1252']
-    
-    for enc in encodings:
+    async with async_playwright() as p:
         try:
-            with open(arquivo, 'r', encoding=enc) as f:
-                f.read()
-            print(f"   ✅ Arquivo pode ser lido com encoding: {enc}")
-            return enc
-        except:
-            continue
-    
-    print(f"   ❌ Não foi possível determinar o encoding")
-    return None
-
-def limpar_arquivo(arquivo):
-    """Cria uma versão limpa do arquivo"""
-    print(f"\n🧹 Criando versão limpa de {arquivo}...")
-    
-    try:
-        # Lê o arquivo com encoding detectado
-        enc = verificar_encoding(arquivo)
-        if not enc:
-            return False
+            # Configurações do browser
+            browser = await p.chromium.launch(
+                headless=False,  # Mostra o navegador para debug
+                args=[
+                    '--disable-blink-features=AutomationControlled',
+                    '--disable-dev-shm-usage',
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox'
+                ]
+            )
             
-        with open(arquivo, 'r', encoding=enc) as f:
-            conteudo = f.read()
-        
-        # Remove BOM se existir
-        if conteudo.startswith('\ufeff'):
-            conteudo = conteudo[1:]
-        
-        # Salva backup
-        backup = f"{arquivo}.backup"
-        Path(arquivo).rename(backup)
-        print(f"   📁 Backup salvo em: {backup}")
-        
-        # Salva versão limpa
-        with open(arquivo, 'w', encoding='utf-8') as f:
-            f.write(conteudo)
-        
-        print(f"   ✅ Arquivo limpo salvo")
-        return True
-        
-    except Exception as e:
-        print(f"   ❌ Erro ao limpar arquivo: {e}")
-        return False
+            context = await browser.new_context(
+                viewport={"width": 1280, "height": 800},
+                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            )
+            
+            page = await context.new_page()
+            
+            # Intercepta respostas para debug
+            responses = []
+            page.on("response", lambda response: responses.append({
+                "url": response.url,
+                "status": response.status,
+                "headers": dict(response.headers)
+            }))
+            
+            print("⏳ Carregando página...")
+            start_time = datetime.now()
+            
+            try:
+                await page.goto(url, timeout=30000)
+                load_time = (datetime.now() - start_time).total_seconds()
+                print(f"✅ Página carregada em {load_time:.2f}s")
+                
+                # Aguarda estabilizar
+                await page.wait_for_load_state("networkidle", timeout=10000)
+                print("✅ Página estabilizada")
+                
+            except Exception as e:
+                print(f"❌ Erro ao carregar página: {e}")
+                await browser.close()
+                return False
+            
+            # Verifica título da página
+            title = await page.title()
+            print(f"📄 Título: {title}")
+            
+            # Verifica se há captcha
+            captcha_selectors = [
+                "iframe[src*='recaptcha']",
+                ".g-recaptcha",
+                "[data-sitekey]",
+                "img[src*='captcha']",
+                "#captcha"
+            ]
+            
+            for selector in captcha_selectors:
+                if await page.query_selector(selector):
+                    print(f"🚨 CAPTCHA DETECTADO: {selector}")
+                    break
+            else:
+                print("✅ Nenhum captcha detectado")
+            
+            # Verifica bloqueios ou mensagens de erro
+            error_texts = [
+                "acesso negado",
+                "bloqueado",
+                "many requests",
+                "rate limit",
+                "forbidden",
+                "erro interno"
+            ]
+            
+            page_content = await page.content()
+            for error_text in error_texts:
+                if error_text.lower() in page_content.lower():
+                    print(f"🚨 POSSÍVEL BLOQUEIO: '{error_text}' encontrado na página")
+            
+            # Procura o seletor problemático
+            print("\n🔍 Verificando seletores importantes...")
+            
+            selectors_check = [
+                "select#cbPesquisa",
+                "#cbPesquisa", 
+                "select[id*='Pesquisa']",
+                "select[name*='pesquisa']",
+                "form",
+                "input[type='text']"
+            ]
+            
+            for selector in selectors_check:
+                try:
+                    element = await page.query_selector(selector)
+                    if element:
+                        print(f"✅ Encontrado: {selector}")
+                        # Se for o seletor principal, mostra as opções
+                        if "cbPesquisa" in selector:
+                            options = await page.query_selector_all(f"{selector} option")
+                            print(f"   📋 Opções disponíveis: {len(options)}")
+                            for opt in options[:5]:  # Mostra só as primeiras 5
+                                value = await opt.get_attribute("value")
+                                text = await opt.inner_text()
+                                print(f"      - {value}: {text}")
+                    else:
+                        print(f"❌ NÃO encontrado: {selector}")
+                except Exception as e:
+                    print(f"❌ Erro ao verificar {selector}: {e}")
+            
+            # Verifica estrutura da página
+            print("\n📊 Estrutura da página:")
+            forms = await page.query_selector_all("form")
+            print(f"   📝 Formulários encontrados: {len(forms)}")
+            
+            selects = await page.query_selector_all("select")
+            print(f"   📋 Selects encontrados: {len(selects)}")
+            
+            inputs = await page.query_selector_all("input")
+            print(f"   ⌨️  Inputs encontrados: {len(inputs)}")
+            
+            # Lista os selects disponíveis
+            if selects:
+                print("\n📋 Selects disponíveis:")
+                for i, select in enumerate(selects[:5]):  # Máximo 5
+                    try:
+                        id_attr = await select.get_attribute("id")
+                        name_attr = await select.get_attribute("name")
+                        print(f"   {i+1}. ID: {id_attr or 'N/A'}, Name: {name_attr or 'N/A'}")
+                    except:
+                        pass
+            
+            # Cria pasta prints se não existir
+            from pathlib import Path
+            prints_dir = Path("prints")
+            prints_dir.mkdir(exist_ok=True)
+            
+            # Salva screenshot para análise
+            screenshot_path = prints_dir / f"debug_{nome}_{datetime.now().strftime('%H%M%S')}.png"
+            await page.screenshot(path=str(screenshot_path))
+            print(f"📸 Screenshot salvo: {screenshot_path}")
+            
+            # Salva HTML da página para análise offline
+            html_path = prints_dir / f"debug_{nome}_{datetime.now().strftime('%H%M%S')}.html"
+            page_html = await page.content()
+            with open(html_path, 'w', encoding='utf-8') as f:
+                f.write(page_html)
+            print(f"📄 HTML salvo: {html_path}")
+            
+            # Mostra respostas HTTP relevantes
+            print(f"\n🌐 Respostas HTTP ({len(responses)} total):")
+            for resp in responses[-5:]:  # Últimas 5 respostas
+                if resp['status'] >= 400:
+                    print(f"   ❌ {resp['status']}: {resp['url'][:80]}...")
+                elif resp['status'] >= 300:
+                    print(f"   ⚠️  {resp['status']}: {resp['url'][:80]}...")
+            
+            await browser.close()
+            return True
+            
+        except Exception as e:
+            print(f"❌ Erro geral: {e}")
+            try:
+                await browser.close()
+            except:
+                pass
+            return False
 
-def main():
+async def main():
     print("="*60)
-    print("DEBUG DETALHADO - TJSP SCRAPER")
+    print("🔍 DIAGNÓSTICO COMPLETO - SITES TJSP")
     print("="*60)
+    print(f"⏰ Iniciado em: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
     
-    scripts = [
-        "tjsp_primeira_instancia.py",
-        "tjsp_segunda_instancia.py",
-        "tjsp_colegio_recursal.py"
-    ]
+    resultados = {}
     
-    problemas = []
+    for nome, url in URLS.items():
+        sucesso = await diagnosticar_site(nome, url)
+        resultados[nome] = sucesso
+        
+        # Pausa entre sites para evitar rate limiting
+        if nome != list(URLS.keys())[-1]:  # Se não for o último
+            print("\n⏸️  Pausando 10 segundos entre sites...")
+            await asyncio.sleep(10)
     
-    for script in scripts:
-        print(f"\n{'='*60}")
-        print(f"Analisando: {script}")
-        print(f"{'='*60}")
-        
-        # 1. Verifica sintaxe
-        sintaxe_ok = verificar_sintaxe_arquivo(script)
-        
-        # 2. Verifica encoding
-        verificar_encoding(script)
-        
-        # 3. Tenta executar
-        executar_teste_direto(script)
-        
-        if not sintaxe_ok:
-            problemas.append(script)
-    
-    # Resumo e sugestões
+    # Resumo final
     print(f"\n{'='*60}")
-    print("RESUMO E SUGESTÕES")
+    print("📊 RESUMO DO DIAGNÓSTICO")
     print(f"{'='*60}")
     
-    if problemas:
-        print(f"\n❌ Arquivos com problemas: {', '.join(problemas)}")
-        print("\n💡 Sugestões:")
-        print("1. Limpar os arquivos com problema:")
-        for script in problemas:
-            print(f"   python debug_erros.py --limpar {script}")
-        print("\n2. Ou recriar os arquivos copiando o conteúdo dos artifacts")
-    else:
-        print("\n✅ Todos os arquivos parecem estar OK")
-        print("   O erro pode estar relacionado ao ambiente de execução")
+    for nome, sucesso in resultados.items():
+        status = "✅ OK" if sucesso else "❌ PROBLEMA"
+        print(f"   {nome}: {status}")
     
-    # Verifica versão do asyncio
-    print(f"\n📦 Ambiente:")
-    print(f"   Python: {sys.version}")
-    try:
-        import asyncio
-        print(f"   asyncio: OK")
-    except:
-        print(f"   asyncio: NÃO DISPONÍVEL")
+    if all(resultados.values()):
+        print("\n🎉 Todos os sites parecem estar funcionais!")
+        print("💡 O problema pode estar nos seletores ou timing dos scripts.")
+    else:
+        print("\n⚠️  Alguns sites apresentaram problemas.")
+        print("💡 Verifique as screenshots e logs acima.")
+    
+    print(f"\n💡 Próximos passos:")
+    print("1. Analise as screenshots geradas")
+    print("2. Verifique se os seletores encontrados são os corretos")
+    print("3. Se houver captcha, considere usar proxy ou delay maior")
 
 if __name__ == "__main__":
-    import argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--limpar', help='Limpa um arquivo específico')
-    args = parser.parse_args()
-    
-    if args.limpar:
-        limpar_arquivo(args.limpar)
-    else:
-        main()
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("\n⚠️  Diagnóstico interrompido pelo usuário.")
+    except Exception as e:
+        print(f"\n❌ Erro no diagnóstico: {e}")
+        sys.exit(1)
