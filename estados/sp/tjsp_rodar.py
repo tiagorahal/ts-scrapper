@@ -5,7 +5,6 @@ from pathlib import Path
 from datetime import datetime
 import threading
 import queue
-import select
 
 scripts = [
     "tjsp_primeira_instancia.py",
@@ -53,19 +52,20 @@ def criar_arquivos_vazios_se_necessario(dados_dir):
             print(f"   ✅ {arquivo} criado com sucesso!")
 
 def ler_output_processo(proc, nome_script, fila_mensagens):
-    """Lê output de um processo em tempo real"""
-    while True:
-        linha = proc.stdout.readline()
-        if not linha:
-            break
-        linha = linha.strip()
+    """Lê output de um processo em tempo real - CORRIGIDO para funcionar"""
+    # Lê stdout linha por linha
+    for linha in iter(proc.stdout.readline, ''):
         if linha:
-            fila_mensagens.put((nome_script, linha))
+            linha_limpa = linha.rstrip('\n\r')
+            if linha_limpa:
+                fila_mensagens.put((nome_script, linha_limpa))
     
-    # Lê stderr também
-    stderr = proc.stderr.read()
-    if stderr:
-        fila_mensagens.put((nome_script, f"ERRO: {stderr}"))
+    # Quando stdout terminar, lê stderr se houver
+    proc.stdout.close()
+    stderr_output = proc.stderr.read()
+    if stderr_output:
+        fila_mensagens.put((nome_script, f"ERRO: {stderr_output.strip()}"))
+    proc.stderr.close()
 
 def mostrar_resumo_final(dados_dir, tempo_total, processos_capturados):
     """Mostra resumo dos arquivos gerados"""
@@ -145,12 +145,12 @@ def main():
     for script in scripts:
         print(f"▶️  Iniciando {script}...")
         try:
+            # MUDANÇA CRÍTICA: Sem bufsize=1, com flush forçado
             p = subprocess.Popen(
-                [sys.executable, script, cnpj],
+                [sys.executable, "-u", script, cnpj],  # -u força unbuffered
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
-                bufsize=1,
                 universal_newlines=True
             )
             processes.append((script, p))
@@ -158,9 +158,9 @@ def main():
             # Cria thread para ler output
             t = threading.Thread(
                 target=ler_output_processo,
-                args=(p, script, fila_mensagens)
+                args=(p, script, fila_mensagens),
+                daemon=True
             )
-            t.daemon = True
             t.start()
             threads.append(t)
             
@@ -172,10 +172,13 @@ def main():
     
     # Monitora mensagens enquanto os processos rodam
     processos_ativos = len(processes)
+    ultima_atividade = time.time()
+    
     while processos_ativos > 0:
         # Verifica se há mensagens na fila
         try:
-            script, mensagem = fila_mensagens.get(timeout=0.1)
+            script, mensagem = fila_mensagens.get(timeout=0.5)  # Timeout maior
+            ultima_atividade = time.time()
             
             # Formata e mostra a mensagem
             timestamp = datetime.now().strftime('%H:%M:%S')
@@ -184,16 +187,19 @@ def main():
             # Conta processos salvos
             if "✅ Resultado salvo:" in mensagem:
                 processos_capturados[script] += 1
-                print(f"[{timestamp}] [{script_curto:>15}] {mensagem}")
-            elif "🔍 Extraindo" in mensagem or "⏳ Aguarde" in mensagem:
-                print(f"[{timestamp}] [{script_curto:>15}] {mensagem}")
-            elif "=====" in mensagem:
-                print(f"[{timestamp}] [{script_curto:>15}] {mensagem}")
-            elif mensagem.strip():
-                print(f"[{timestamp}] [{script_curto:>15}] {mensagem}")
+            
+            # Mostra TODAS as mensagens agora
+            print(f"[{timestamp}] [{script_curto:>15}] {mensagem}")
+            
+            # Força flush do stdout
+            sys.stdout.flush()
                 
         except queue.Empty:
-            pass
+            # Se não há mensagens há muito tempo, mostra status
+            if time.time() - ultima_atividade > 30:
+                print(f"[{datetime.now().strftime('%H:%M:%S')}] [MONITOR] Scripts ainda executando...")
+                ultima_atividade = time.time()
+                sys.stdout.flush()
         
         # Verifica quais processos ainda estão rodando
         processos_ativos = 0
@@ -206,7 +212,17 @@ def main():
     
     # Aguarda threads terminarem
     for t in threads:
-        t.join(timeout=1)
+        t.join(timeout=2)
+    
+    # Processa mensagens restantes na fila
+    while not fila_mensagens.empty():
+        try:
+            script, mensagem = fila_mensagens.get_nowait()
+            timestamp = datetime.now().strftime('%H:%M:%S')
+            script_curto = script.replace('tjsp_', '').replace('.py', '')
+            print(f"[{timestamp}] [{script_curto:>15}] {mensagem}")
+        except queue.Empty:
+            break
     
     # Verifica erros
     erros = []
