@@ -1,99 +1,138 @@
+
+
 # 🏛️ TJSP Scraper
 
-Sistema automatizado para extração de processos judiciais do Tribunal de Justiça de São Paulo (TJSP). Realiza consultas simultâneas em **1ª Instância**, **2ª Instância** e **Colégio Recursal**, exportando os dados para planilhas Excel organizadas.
+Sistema automatizado para extração de processos judiciais do Tribunal de Justiça de São Paulo (TJSP). Realiza consultas em **1ª Instância**, **2ª Instância** e **Colégio Recursal**, exportando os dados para planilhas Excel.
+
+> **Recomendado:** rodar via **Docker** (imagem Playwright com navegadores pré-instalados) usando os alvos do **Makefile**.
 
 ## 📋 Índice
 
-- [Características](#-características)
-- [Instalação](#-instalação)
-- [Uso](#-uso)
-- [Estrutura do Projeto](#-estrutura-do-projeto)
-- [Configuração](#-configuração)
-- [Logs e Monitoramento](#-logs-e-monitoramento)
-- [Troubleshooting](#-troubleshooting)
-- [Contribuição](#-contribuição)
+* [Características](#-características)
+* [Pré-requisitos](#-pré-requisitos)
+* [Como rodar (Docker)](#-como-rodar-docker)
+* [Comandos do Makefile](#-comandos-do-makefile)
+* [Execução local (opcional)](#-execução-local-opcional)
+* [Estrutura do Projeto](#-estrutura-do-projeto)
+* [Configuração](#-configuração)
+* [Logs e Saída](#-logs-e-saída)
+* [Troubleshooting](#-troubleshooting)
+* [Contribuição](#-contribuição)
+* [Licença](#-licença)
 
 ## ✨ Características
 
-- **🔄 Execução Paralela**: Consulta as 3 instâncias simultaneamente
-- **📊 Export Excel**: Dados organizados em planilhas estruturadas
-- **🔍 Logs em Tempo Real**: Monitoramento detalhado da execução
-- **🤖 Comportamento Humano**: Delays inteligentes para evitar detecção
-- **📄 Extração Completa**: Movimentações, partes, valores e detalhes processuais
-- **🛡️ Anti-Detecção**: User-agents realistas e timing humanizado
-- **💾 Dados Incrementais**: Evita duplicatas e permite execuções múltiplas
+* **🐳 Docker-first**: imagem baseada em `mcr.microsoft.com/playwright/python:v1.44.0-jammy`
+* **🧠 Anti-detecção**: Playwright + stealth + delays humanizados
+* **📊 Export Excel**: planilhas por instância
+* **🔁 Execução Sequencial/Paralela**: escolha rodar 1, 2 ou 3 instâncias
+* **🔧 Makefile**: comandos prontos (`montar`, `tjsp_seq`, `tjsp_1`, `tjsp_2`, `tjsp_c`, `shell`, `limpar`)
+* **🧱 Resiliência**: patches automáticos de dependências Linux (sem libs só-Windows)
+* **🧪 Diagnóstico**: scripts de debug/relatórios
 
-## 🚀 Instalação
+## ✅ Pré-requisitos
 
-### Pré-requisitos
+* **Docker** 20+
+* **Make** (GNU make)
 
-- Python 3.8+
-- pip (gerenciador de pacotes Python)
+> Se não quiser usar `make`, há exemplos com `docker run` mais abaixo.
 
-### 1. Clone o Repositório
+## 🚀 Como rodar (Docker)
 
 ```bash
+# 1) Clonar e entrar no projeto
 git clone https://github.com/tiagorahal/ts-scrapper.git
 cd ts-scrapper
+
+# 2) Montar a imagem (sem cache, do zero)
+make montar_limpo
+
+# 3) Executar SEQUENCIAL (recomendado: evita 3 Chromiums simultâneos)
+make tjsp_seq ARG="18.188.384/0001-83"
+
+# (ou rodar cada instância separada)
+make tjsp_1 ARG="18.188.384/0001-83"
+make tjsp_2 ARG="18.188.384/0001-83"
+make tjsp_c ARG="18.188.384/0001-83"
+
+# abrir um shell dentro do container
+make shell_ts
 ```
 
-### 2. Configure o Ambiente Virtual
+### Sem Makefile (só Docker)
 
 ```bash
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# ou
-venv\Scripts\activate  # Windows
+docker pull mcr.microsoft.com/playwright/python:v1.44.0-jammy
+docker build --no-cache -t ts-scrapper .
+
+# Sequencial:
+docker run --rm -it --name ts-scrapper-run --shm-size=1g \
+  -e DISABLE_DESKTOP_NOTIFY=1 \
+  -v "$PWD:/app" ts-scrapper run-tjsp -1 "18.188.384/0001-83"
+
+docker run --rm -it --name ts-scrapper-run --shm-size=1g \
+  -e DISABLE_DESKTOP_NOTIFY=1 \
+  -v "$PWD:/app" ts-scrapper run-tjsp -2 "18.188.384/0001-83"
+
+docker run --rm -it --name ts-scrapper-run --shm-size=1g \
+  -e DISABLE_DESKTOP_NOTIFY=1 \
+  -v "$PWD:/app" ts-scrapper run-tjsp -c "18.188.384/0001-83"
 ```
 
-### 3. Instale as Dependências
+> **Dicas**
+>
+> * `--shm-size=1g` evita crash do Chromium em scraping pesado.
+> * `DISABLE_DESKTOP_NOTIFY=1` silencia notificações no container.
+
+## 🧰 Comandos do Makefile
+
+| Alvo           | O que faz                                                                      | Exemplo                    |
+| -------------- | ------------------------------------------------------------------------------ | -------------------------- |
+| `montar_ts`    | Build da imagem com cache                                                      | `make montar_ts`           |
+| `montar_limpo` | Build **sem cache** (reconstrói tudo)                                          | `make montar_limpo`        |
+| `tjsp`         | Executa o orquestrador padrão (pode abrir 3 ao mesmo tempo, depende do código) | `make tjsp ARG="CNPJ"`     |
+| `tjsp_seq`     | **Executa sequencialmente**: 1ª ➜ 2ª ➜ Colégio                                 | `make tjsp_seq ARG="CNPJ"` |
+| `tjsp_1`       | Só 1ª instância                                                                | `make tjsp_1 ARG="CNPJ"`   |
+| `tjsp_2`       | Só 2ª instância                                                                | `make tjsp_2 ARG="CNPJ"`   |
+| `tjsp_c`       | Só Colégio Recursal                                                            | `make tjsp_c ARG="CNPJ"`   |
+| `shell_ts`     | Abre um bash no container com o repo montado                                   | `make shell_ts`            |
+| `limpar_ts`    | Remove container/imagem                                                        | `make limpar_ts`           |
+
+**Variáveis úteis:**
+
+* `PW_PARALLEL` — se o orquestrador suportar, controla concorrência interna (default `1` no Makefile):
+
+  ```bash
+  make PW_PARALLEL=2 tjsp ARG="CNPJ"
+  ```
+* `SHM` — memória compartilhada do container (default `1g`):
+
+  ```bash
+  make SHM=2g tjsp_seq ARG="CNPJ"
+  ```
+
+## 🐍 Execução local (opcional)
+
+> Só se você preferir rodar sem Docker.
 
 ```bash
+python3 -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\Activate.ps1
+
+python -m pip install --upgrade pip
 pip install -r requirements.txt
-```
 
-### 4. Instale o Playwright
-
-```bash
+# baixar navegadores do Playwright
+python -m pip install playwright==1.44.0
 playwright install chromium
-```
 
-## 🎯 Uso
-
-### Execução Completa (Recomendada)
-
-```bash
-cd estados/sp/
-python tjsp_rodar.py
-```
-
-O sistema irá:
-1. ✅ Solicitar o CNPJ da empresa
-2. ✅ Executar os 3 scripts em paralelo
-3. ✅ Mostrar logs em tempo real
-4. ✅ Gerar planilhas na pasta `dados/`
-
-### Execução Individual
-
-Para testar uma instância específica:
-
-```bash
-# 1ª Instância
-python tjsp_primeira_instancia.py "00.000.000/0001-91"
-
-# 2ª Instância  
-python tjsp_segunda_instancia.py "00.000.000/0001-91"
-
-# Colégio Recursal
-python tjsp_colegio_recursal.py "00.000.000/0001-91"
-```
-
-### Diagnóstico do Sistema
-
-Para verificar se tudo está funcionando:
-
-```bash
-python diagnostic_tjsp.py
+# rodar
+cd estados/sp
+python tjsp_executor.py "18.188.384/0001-83"
+# ou:
+python tjsp_executor.py -1 "CNPJ"    # 1ª
+python tjsp_executor.py -2 "CNPJ"    # 2ª
+python tjsp_executor.py -c "CNPJ"    # Colégio
 ```
 
 ## 📁 Estrutura do Projeto
@@ -101,197 +140,114 @@ python diagnostic_tjsp.py
 ```
 ts-scrapper/
 ├── estados/sp/
-│   ├── dados/                          # 📊 Planilhas geradas
-│   │   ├── primeira_instancia_tjsp.xlsx
-│   │   ├── segunda_instancia_tjsp.xlsx
-│   │   └── colegio_recursal_tjsp.xlsx
-│   ├── prints/                         # 📸 Screenshots de debug
-│   ├── tjsp_rodar.py                   # 🎮 Executor principal
-│   ├── tjsp_primeira_instancia.py      # 🏛️ Script 1ª instância
-│   ├── tjsp_segunda_instancia.py       # ⚖️ Script 2ª instância
-│   ├── tjsp_colegio_recursal.py        # 🎓 Script colégio recursal
-│   ├── diagnostic_tjsp.py              # 🔍 Diagnóstico do sistema
-│   ├── debug_offline.py                # 🛠️ Debug offline
-│   └── analise_seletores.py            # 🔧 Análise de seletores
-├── venv/                               # 🐍 Ambiente virtual
-├── requirements.txt                    # 📦 Dependências
-└── README.md                           # 📖 Este arquivo
+│   ├── dados/                        # 📊 Planilhas geradas (.xlsx)
+│   ├── logs/                         # 📝 Logs de execução
+│   ├── relatorios/                   # 📄 Relatórios HTML (se habilitado)
+│   ├── prints/                       # 📸 Screenshots/HTML de debug
+│   ├── tjsp_executor.py              # 🎮 Orquestrador
+│   ├── scrappers_implementados.py    # 🧩 Scrapers por instância
+│   ├── analisador.py                 # 📈 Análise agregada
+│   └── ... (outros utilitários)
+├── Dockerfile                        # 🐳 Build usando Playwright + browsers
+├── Makefile                          # 🔧 Comandos prontos
+├── requirements.txt                  # 📦 Dependências (Linux-patched no build)
+└── README.md                         # 📖 Este arquivo
 ```
 
 ## ⚙️ Configuração
 
-### Campos Extraídos
+Principais variáveis (lidas por CLI/env/código):
 
-Cada planilha contém os seguintes campos:
+| Variável/Flag                  | Descrição                                        | Exemplo              |
+| ------------------------------ | ------------------------------------------------ | -------------------- |
+| `-1`, `-2`, `-c`               | Seleciona instâncias (1ª, 2ª, Colégio)           | `run-tjsp -1 "CNPJ"` |
+| `PW_PARALLEL` (env)            | Limita concorrência de Playwright (se suportado) | `PW_PARALLEL=1`      |
+| `DISABLE_DESKTOP_NOTIFY` (env) | Desliga notificações no container                | `1`                  |
+| Timeouts/Delays                | Ajuste no código (delays humanizados, timeouts)  | —                    |
 
-| Campo | Descrição |
-|-------|-----------|
-| `instancia` | 1ª Instância / 2ª Instância / Colégio Recursal |
-| `numero` | Número do processo |
-| `link` | URL do processo no TJSP |
-| `classe` | Classe processual |
-| `assunto` | Assunto do processo |
-| `relator` | Relator (2ª instância/Colégio) |
-| `foro` | Foro de origem |
-| `vara` | Vara responsável |
-| `juiz` | Juiz responsável |
-| `requerente` | Parte requerente |
-| `requerido` | Parte requerida |
-| `valor_acao` | Valor da ação |
-| `movimentacoes` | Últimas movimentações |
-| `distribuicao` | Data de distribuição |
-| `area` | Área do direito |
+## 🗂️ Logs e Saída
 
-### Personalização
+* **Planilhas**: `estados/sp/dados/`
 
-Para modificar campos ou comportamento, edite as constantes nos scripts:
+  * `primeira_instancia_tjsp.xlsx`
+  * `segunda_instancia_tjsp.xlsx`
+  * `colegio_recursal_tjsp.xlsx`
+* **Logs**: `estados/sp/logs/`
+* **Debug** (se habilitado): `estados/sp/prints/`
 
-```python
-# Timeout para aguardar elementos (ms)
-TIMEOUT_PADRAO = 15000
+## 🛠️ Troubleshooting
 
-# Campos extraídos
-CAMPOS_PADRAO = [
-    "instancia", "numero", "link", 
-    # ... adicione campos personalizados
-]
-```
+### ❌ “Abriu 3 Playwright ao mesmo tempo”
 
-## 📊 Logs e Monitoramento
+* Use execução **sequencial**:
 
-### Logs em Tempo Real
+  ```bash
+  make tjsp_seq ARG="CNPJ"
+  ```
+* Ou, se o orquestrador suportar, limite:
 
-Durante a execução, você verá logs detalhados:
+  ```bash
+  make PW_PARALLEL=1 tjsp ARG="CNPJ"
+  ```
 
-```
-[22:15:30] [primeira_instancia] 🌐 Página carregada, aguardando estabilizar...
-[22:15:33] [primeira_instancia] 🔍 Aguardando seletor de pesquisa...
-[22:15:35] [segunda_instancia] 📋 Selecionando 'Documento da Parte'...
-[22:15:37] [colegio_recursal] ⌨️ Digitando CNPJ: 00.000.000/0001-91
-[22:15:42] [primeira_instancia] 🚀 Clicando no botão consultar...
-[22:15:45] [segunda_instancia] ✅ Página de resultados carregada!
-```
+### ❌ “No such file or directory: 'gdbus'” / DBus / notificação
 
-### Relatórios de Debug
+* No Docker, desabilite notificações:
 
-O sistema gera relatórios automáticos na pasta `prints/`:
+  ```bash
+  make tjsp_seq ARG="CNPJ" PW_PARALLEL=1
+  ```
 
-- `dependencias_*.txt` - Status das dependências
-- `analise_arquivos_*.txt` - Verificação dos scripts
-- `debug_*.png` - Screenshots das páginas
-- `debug_*.html` - HTML das páginas para análise
+  (o Makefile já exporta `DISABLE_DESKTOP_NOTIFY=1`).
+* Alternativamente, instale `libglib2.0-bin libnotify-bin dbus` (já incluso na imagem base Playwright Jammy).
 
-## 🔧 Troubleshooting
+### ❌ Playwright “Executable doesn’t exist…”
 
-### Problemas Comuns
+* Na imagem Playwright **não** precisa `playwright install`. Se estiver rodando **local**, rode:
 
-#### ❌ "Seletor não encontrado"
-```bash
-# Execute o diagnóstico
-python diagnostic_tjsp.py
+  ```bash
+  playwright install chromium
+  ```
 
-# Verifique se o site está online
-# Screenshots serão salvas em prints/
-```
+### ❌ `' margin'`
 
-#### ❌ "Timeout ao clicar no botão"
-```bash
-# Teste individual para debug
-python tjsp_primeira_instancia.py "00.000.000/0001-91"
+* Chave de layout com espaço (Plotly/Matplotlib). Patch rápido:
 
-# Verifique logs detalhados para identificar onde para
-```
+  ```bash
+  sed -i "s/' margin'/'margin'/g; s/\" margin\"/\"margin\"/g" estados/sp/analisador.py
+  ```
 
-#### ❌ "Playwright não instalado"
-```bash
-pip install playwright
-playwright install chromium
-```
+### ❌ `'datetime.datetime' object has no attribute 'get'`
 
-#### ❌ "Arquivo Excel corrompido"
-```bash
-# Remove arquivos corrompidos
-rm dados/*.xlsx
+* Algum ponto espera `dict` e recebe `datetime`. Adicione um guard no local apontado pelo stack:
 
-# Executa novamente
-python tjsp_rodar.py
-```
+  ```python
+  from datetime import datetime
+  if isinstance(obj, datetime):
+      # converter para string/data ou pular
+  ```
 
-### Debug Avançado
+### ❌ Falhas de dependência no Linux
 
-Para análise detalhada dos problemas:
-
-```bash
-# Debug offline completo
-python debug_offline.py
-
-# Análise de seletores CSS
-python analise_seletores.py
-
-# Diagnóstico com screenshots
-python diagnostic_tjsp.py
-```
-
-### Limitações Conhecidas
-
-- ⚠️ **Rate limiting**: Evite execuções muito frequentes
-- ⚠️ **Captchas**: Podem aparecer em consultas excessivas
-- ⚠️ **Mudanças no site**: Seletores podem mudar
-
-## 🛡️ Considerações Legais
-
-- ✅ **Uso Responsável**: Respeite os termos de uso do TJSP
-- ✅ **Rate Limiting**: Sistema inclui delays para evitar sobrecarga
-- ✅ **Dados Públicos**: Apenas consulta informações públicas
-- ✅ **Compliance**: Adequado para uso advocatício e empresarial
+* O Docker já **remove** libs só-Windows (`pywin32`, `pypiwin32`, `win10toast`) e corrige pins problemáticos (`numpy==1.26.4`, `scikit-learn==1.4.2`, `proxy-requests==0.5.2`).
 
 ## 🤝 Contribuição
 
-### Como Contribuir
-
-1. **Fork** o projeto
-2. **Crie** uma branch para sua feature (`git checkout -b feature/nova-funcionalidade`)
-3. **Commit** suas mudanças (`git commit -am 'Adiciona nova funcionalidade'`)
-4. **Push** para a branch (`git push origin feature/nova-funcionalidade`)
-5. **Abra** um Pull Request
-
-### Reportar Bugs
-
-Use as [Issues do GitHub](https://github.com/tiagorahal/ts-scrapper/issues) para reportar bugs, incluindo:
-
-- 🐛 Descrição do problema
-- 📱 Sistema operacional
-- 🐍 Versão do Python
-- 📄 Logs de erro completos
-- 📸 Screenshots se relevante
-
-### Roadmap
-
-- [ ] 🔐 Suporte a autenticação com certificado digital
-- [ ] 📊 Dashboard web para visualização dos dados
-- [ ] 🤖 Integração com APIs
-- [ ] 📱 Versão mobile/responsiva
-- [ ] 🔔 Notificações automáticas de movimentações
-- [ ] 📈 Análises estatísticas automáticas
+1. Faça um **fork**
+2. Crie uma branch: `git checkout -b feature/minha-feature`
+3. Commit: `git commit -m "feat: minha feature"`
+4. Push: `git push origin feature/minha-feature`
+5. Abra um **PR**
 
 ## 📄 Licença
 
-Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para mais detalhes.
-
-## 👥 Autores
-
-- **Tiago Rahal** - *Desenvolvimento inicial* - [@tiagorahal](https://github.com/tiagorahal)
-
-## 📞 Suporte
-
-- 📧 **Email**: [rahal.aires@gmail.com]
-- 🐛 **Issues**: [GitHub Issues](https://github.com/tiagorahal/ts-scrapper/issues)
-- 💬 **Discussões**: [GitHub Discussions](https://github.com/tiagorahal/ts-scrapper/discussions)
+Licença **MIT**. Veja `LICENSE`.
 
 ---
 
-⭐ **Se este projeto te ajudou, considere dar uma estrela no GitHub!**
+**Autor:** [@tiagorahal](https://github.com/tiagorahal)
+**Versão atual:** 1.0.0
+**Status:** ✅ Ativo
+**Última atualização:** **Agosto/2025**
 
-**Versão atual**: 1.0.0  
-**Status**: ✅ Ativo e Funcional  
-**Última atualização**: Agosto 2025
+> ⭐ Curtiu? Deixa uma estrela no GitHub!
