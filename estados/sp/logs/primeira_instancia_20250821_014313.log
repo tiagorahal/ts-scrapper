@@ -1,0 +1,50 @@
+2025-08-21 01:43:13,798 - primeira_instancia - INFO - ============================================================
+2025-08-21 01:43:13,798 - primeira_instancia - INFO - 🏛️ PRIMEIRA_INSTANCIA
+2025-08-21 01:43:13,798 - primeira_instancia - INFO - 📋 CNPJ: 18.188.384/0001-83
+2025-08-21 01:43:13,798 - primeira_instancia - INFO - ============================================================
+2025-08-21 01:43:13,799 - TJSPOrquestrador - INFO - 🚀 Iniciando ScraperSegundaInstancia...
+2025-08-21 01:43:13,799 - segunda_instancia - INFO - ============================================================
+2025-08-21 01:43:13,799 - segunda_instancia - INFO - 🏛️ SEGUNDA_INSTANCIA
+2025-08-21 01:43:13,799 - segunda_instancia - INFO - 📋 CNPJ: 18.188.384/0001-83
+2025-08-21 01:43:13,799 - segunda_instancia - INFO - ============================================================
+2025-08-21 01:43:13,799 - TJSPOrquestrador - INFO - 🚀 Iniciando ScraperColegioRecursal...
+2025-08-21 01:43:13,799 - colegio_recursal - INFO - ============================================================
+2025-08-21 01:43:13,800 - colegio_recursal - INFO - 🏛️ COLEGIO_RECURSAL
+2025-08-21 01:43:13,800 - colegio_recursal - INFO - 📋 CNPJ: 18.188.384/0001-83
+2025-08-21 01:43:13,800 - colegio_recursal - INFO - ============================================================
+2025-08-21 01:43:15,234 - segunda_instancia - INFO - 🔍 Configurando busca na 2ª Instância...
+2025-08-21 01:43:15,287 - primeira_instancia - INFO - 🔍 Configurando busca na 1ª Instância...
+2025-08-21 01:43:15,290 - segunda_instancia - INFO - 🔍 Configurando busca na 2ª Instância...
+2025-08-21 01:43:27,252 - colegio_recursal - INFO - 📄 Processando página 1...
+2025-08-21 01:43:27,486 - primeira_instancia - INFO - ⏳ Aguardando resultados...
+2025-08-21 01:43:27,551 - primeira_instancia - INFO - ✅ Busca configurada com sucesso
+2025-08-21 01:43:27,551 - primeira_instancia - INFO - 📄 Processando página 1...
+2025-08-21 01:43:28,455 - colegio_recursal - INFO - ✅ Processo 1/4: 0111173-35.2025.8.26.9061
+2025-08-21 01:43:30,593 - colegio_recursal - INFO - ✅ Processo 2/4: 1001458-43.2024.8.26.0374
+2025-08-21 01:43:31,223 - segunda_instancia - INFO - 📄 Processando página 1...
+2025-08-21 01:43:31,259 - segunda_instancia - INFO - 📋 25 processos encontrados
+2025-08-21 01:43:32,429 - segunda_instancia - INFO - ✅ Processo 1/25: 1008882-61.2025.8.26.0032
+2025-08-21 01:43:32,828 - colegio_recursal - INFO - ✅ Processo 3/4: 1002216-19.2024.8.26.0472
+2025-08-21 01:43:34,538 - segunda_instancia - INFO - ✅ Processo 2/25: 1001117-05.2025.8.26.0108
+2025-08-21 01:43:35,004 - colegio_recursal - INFO - ✅ Processo 4/4: 1004318-78.2024.8.26.0483
+2025-08-21 01:43:36,443 - colegio_recursal - INFO - ✅ Salvos 4 processos em /app/estados/sp/dados/colegio_recursal_tjsp.xlsx
+2025-08-21 01:43:36,448 - colegio_recursal - INFO - ✅ Todas as páginas processadas
+2025-08-21 01:43:36,475 - colegio_recursal - INFO - 
+============================================================
+2025-08-21 01:43:36,475 - colegio_recursal - INFO - 📊 RESUMO - colegio_recursal
+2025-08-21 01:43:36,475 - colegio_recursal - INFO - ============================================================
+2025-08-21 01:43:36,475 - colegio_recursal - INFO - ✅ Processos extraídos: 4
+2025-08-21 01:43:36,475 - colegio_recursal - INFO - ❌ Erros: 0
+2025-08-21 01:43:36,475 - colegio_recursal - INFO - 📄 Páginas processadas: 1
+2025-08-21 01:43:36,475 - colegio_recursal - INFO - 🔄 Tentativas de retry: 0
+2025-08-21 01:43:36,475 - colegio_recursal - INFO - ⏱️ Tempo total: 22.7 segundos
+2025-08-21 01:43:36,475 - colegio_recursal - INFO - 📁 Arquivo salvo: /app/estados/sp/dados/colegio_recursal_tjsp.xlsx
+2025-08-21 01:43:36,475 - colegio_recursal - INFO - ============================================================
+
+2025-08-21 01:43:36,778 - segunda_instancia - INFO - ✅ Processo 3/25: 1007024-92.2025.8.26.0032
+2025-08-21 01:43:37,551 - primeira_instancia - WARNING - Tentativa 1/3 para encontrar ul.unj-list-row
+2025-08-21 01:43:39,049 - segunda_instancia - INFO - ✅ Processo 4/25: 1019115-29.2024.8.26.0008
+2025-08-21 01:43:41,171 - segunda_instancia - INFO - ✅ Processo 5/25: 1009100-89.2025.8.26.0032
+2025-08-21 01:43:43,292 - segunda_instancia - INFO - ✅ Processo 6/25: 1007014-48.2025.8.26.0032
+2025-08-21 01:43:45,438 - segunda_instancia - INFO - ✅ Processo 7/25: 1047034-88.2023.8.26.0602
+2025-08-21 01:43:47,521 - segunda_instancia - INFO - ✅ Processo 8/25: 1003327-87.2025.8.26.0024

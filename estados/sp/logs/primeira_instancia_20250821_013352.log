@@ -1,0 +1,50 @@
+2025-08-21 01:33:52,030 - primeira_instancia - INFO - ============================================================
+2025-08-21 01:33:52,030 - primeira_instancia - INFO - 🏛️ PRIMEIRA_INSTANCIA
+2025-08-21 01:33:52,030 - primeira_instancia - INFO - 📋 CNPJ: 18.188.384/0001-83
+2025-08-21 01:33:52,030 - primeira_instancia - INFO - ============================================================
+2025-08-21 01:33:52,031 - TJSPOrquestrador - INFO - 🚀 Iniciando ScraperSegundaInstancia...
+2025-08-21 01:33:52,031 - segunda_instancia - INFO - ============================================================
+2025-08-21 01:33:52,031 - segunda_instancia - INFO - 🏛️ SEGUNDA_INSTANCIA
+2025-08-21 01:33:52,031 - segunda_instancia - INFO - 📋 CNPJ: 18.188.384/0001-83
+2025-08-21 01:33:52,031 - segunda_instancia - INFO - ============================================================
+2025-08-21 01:33:52,031 - TJSPOrquestrador - INFO - 🚀 Iniciando ScraperColegioRecursal...
+2025-08-21 01:33:52,031 - colegio_recursal - INFO - ============================================================
+2025-08-21 01:33:52,032 - colegio_recursal - INFO - 🏛️ COLEGIO_RECURSAL
+2025-08-21 01:33:52,032 - colegio_recursal - INFO - 📋 CNPJ: 18.188.384/0001-83
+2025-08-21 01:33:52,032 - colegio_recursal - INFO - ============================================================
+2025-08-21 01:33:52,373 - TJSPOrquestrador - ERROR - ❌ Erro em ScraperPrimeiraInstancia: BrowserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium-1117/chrome-linux/chrome
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     playwright install                                     ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
+2025-08-21 01:33:52,374 - TJSPOrquestrador - ERROR - ❌ Erro em ScraperColegioRecursal: BrowserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium-1117/chrome-linux/chrome
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     playwright install                                     ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
+2025-08-21 01:33:52,374 - TJSPOrquestrador - ERROR - ❌ Erro em ScraperSegundaInstancia: BrowserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium-1117/chrome-linux/chrome
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     playwright install                                     ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
+2025-08-21 01:33:52,375 - TJSPOrquestrador - INFO - 📊 Iniciando análise dos dados...
+2025-08-21 01:33:52,733 - AnalisadorTJSP - INFO - ✅ Carregado primeira_instancia_tjsp.xlsx: 1269 processos
+2025-08-21 01:33:52,812 - AnalisadorTJSP - INFO - ✅ Carregado segunda_instancia_tjsp.xlsx: 435 processos
+2025-08-21 01:33:52,905 - AnalisadorTJSP - INFO - ✅ Carregado colegio_recursal_tjsp.xlsx: 500 processos
+2025-08-21 01:33:52,905 - AnalisadorTJSP - INFO - 🔍 Iniciando análise completa...
+2025-08-21 01:33:53,049 - TJSPOrquestrador - ERROR - ❌ Erro na análise: ' margin'
+2025-08-21 01:33:53,050 - TJSPOrquestrador - ERROR - ❌ Erro geral: 'datetime.datetime' object has no attribute 'get'
+2025-08-21 01:33:53,050 - NotificadorDesktop - ERROR - ❌ Erro na notificação desktop: [Errno 2] No such file or directory: 'gdbus'
+2025-08-21 01:33:53,051 - GerenciadorNotificacoes - WARNING - ⚠️ 1 notificações falharam

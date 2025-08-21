@@ -1,0 +1,38 @@
+2025-08-21 01:33:52 | TJSPOrquestrador     | INFO     | ============================================================
+2025-08-21 01:33:52 | TJSPOrquestrador     | INFO     | 🏛️ TJSP SCRAPER v2.0
+2025-08-21 01:33:52 | TJSPOrquestrador     | INFO     | 📋 CNPJ: 18.188.384/0001-83
+2025-08-21 01:33:52 | TJSPOrquestrador     | INFO     | 🎯 Instâncias: primeira, segunda, colegio
+2025-08-21 01:33:52 | TJSPOrquestrador     | INFO     | ============================================================
+2025-08-21 01:33:52 | TJSPOrquestrador     | INFO     | 🚀 Iniciando ScraperPrimeiraInstancia...
+2025-08-21 01:33:52 | TJSPOrquestrador     | INFO     | 🚀 Iniciando ScraperSegundaInstancia...
+2025-08-21 01:33:52 | TJSPOrquestrador     | INFO     | 🚀 Iniciando ScraperColegioRecursal...
+2025-08-21 01:33:52 | TJSPOrquestrador     | ERROR    | ❌ Erro em ScraperPrimeiraInstancia: BrowserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium-1117/chrome-linux/chrome
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     playwright install                                     ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
+2025-08-21 01:33:52 | TJSPOrquestrador     | ERROR    | ❌ Erro em ScraperColegioRecursal: BrowserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium-1117/chrome-linux/chrome
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     playwright install                                     ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
+2025-08-21 01:33:52 | TJSPOrquestrador     | ERROR    | ❌ Erro em ScraperSegundaInstancia: BrowserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium-1117/chrome-linux/chrome
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     playwright install                                     ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
+2025-08-21 01:33:52 | TJSPOrquestrador     | INFO     | 📊 Iniciando análise dos dados...
+2025-08-21 01:33:53 | TJSPOrquestrador     | ERROR    | ❌ Erro na análise: ' margin'
+2025-08-21 01:33:53 | TJSPOrquestrador     | ERROR    | ❌ Erro geral: 'datetime.datetime' object has no attribute 'get'

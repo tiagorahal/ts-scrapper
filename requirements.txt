@@ -1,14 +1,83 @@
-# Automação Web
+# ===================================
+# TJSP Scraper v2.0 - Requirements
+# ===================================
+
+# Core - Automação Web
 playwright==1.44.0
+playwright-stealth==1.0.6  # Anti-detecção
 
-# Manipulação de dados
+# Manipulação de Dados
 pandas==2.2.2
-openpyxl==3.1.2  # Para leitura/escrita de arquivos Excel
-
-# Dependências do pandas
-numpy>=1.26.0
+numpy==1.26.4
+openpyxl==3.1.2  # Excel
+xlsxwriter==3.2.0  # Excel alternativo
 python-dateutil>=2.8.2
 pytz>=2024.1
 
-# Para melhor formatação de saída (opcional)
-colorama==0.4.6  # Para cores no terminal (Windows)
+# Análise e Visualização
+matplotlib==3.8.3
+seaborn==0.13.2
+plotly==5.20.0
+
+# Processamento Assíncrono
+aiohttp==3.9.3
+aiofiles==23.2.1
+asyncio-throttle==1.0.2
+
+# Notificações
+plyer==2.1  # Notificações desktop cross-platform
+win10toast==0.9  # Windows (opcional); platform_system == "Windows"
+# pync==2.0.3  # macOS (opcional)
+
+# Email
+secure-smtplib==0.1.1
+
+# Validação e Parsing
+python-decouple==3.8  # Variáveis de ambiente
+jsonschema==4.21.1  # Validação JSON
+beautifulsoup4==4.12.3  # Parsing HTML backup
+lxml==5.1.0  # Parser XML/HTML
+
+# CLI e Configuração
+colorama==0.4.6  # Cores no terminal
+rich==13.7.1  # Terminal rico
+click==8.1.7  # CLI alternativo
+python-dotenv==1.0.1  # Arquivos .env
+
+# Logging e Monitoramento
+loguru==0.7.2  # Logging avançado
+tqdm==4.66.2  # Barras de progresso
+
+# Cache e Performance
+diskcache==5.6.3  # Cache em disco
+redis==5.0.1  # Cache Redis (opcional)
+ujson==5.9.0  # JSON rápido
+
+# Compressão e Arquivos
+py7zr==0.21.0  # Compressão 7z
+rarfile==4.1  # Arquivos RAR
+
+# Utilitários
+python-slugify==8.0.4  # Sanitização de strings
+fake-useragent==1.5.1  # User agents aleatórios
+tenacity==8.2.3  # Retry avançado
+
+# Qualidade de Código (desenvolvimento)
+pytest==8.0.2
+pytest-asyncio==0.23.5
+pytest-cov==4.1.0
+black==24.2.0
+flake8==7.0.0
+mypy==1.8.0
+pre-commit==3.6.2
+
+# Documentação (desenvolvimento)
+sphinx==7.2.6
+sphinx-rtd-theme==2.0.0
+
+# Opcional - Proxy e Anti-Captcha
+python-anticaptcha==1.0.0
+2captcha-python==1.2.5
+proxy-requests==0.5.2
+pywin32>=306; platform_system == "Windows"
+win10toast==0.9; platform_system == "Windows"
